@@ -1,0 +1,106 @@
+<div class="scene">
+    <div class="panda-wrap">
+        <svg class="panda" [class.covering]="isCovering()" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+            <g class="ears">
+                <circle cx="54" cy="56" r="32" class="fill-black" />
+                <circle cx="186" cy="56" r="32" class="fill-black" />
+            </g>
+
+            <circle cx="120" cy="126" r="92" class="fill-white" stroke="#eef0f3" stroke-width="2" />
+
+            <ellipse cx="85" cy="120" rx="30" ry="36" transform="rotate(-12 85 120)" class="fill-black" />
+            <ellipse cx="155" cy="120" rx="30" ry="36" transform="rotate(12 155 120)" class="fill-black" />
+
+            <circle cx="88" cy="122" r="10" class="fill-white" />
+            <circle class="pupil" cx="90" cy="124" r="5" fill="#14161c" />
+            <circle cx="152" cy="122" r="10" class="fill-white" />
+            <circle class="pupil" cx="150" cy="124" r="5" fill="#14161c" />
+
+            <path d="M112 172 Q120 166 128 172 Q128 180 120 182 Q112 180 112 172 Z" class="fill-black" />
+            <path d="M120 182 L120 190 M120 190 Q120 198 108 202 M120 190 Q120 198 132 202" stroke="#1f2430"
+                stroke-width="2.4" fill="none" stroke-linecap="round" />
+
+            <g class="paw left">
+                <path
+                    d="M60 150 C 34 150 20 128 22 104 C 24 82 42 68 68 68 C 96 68 114 86 116 112 C 118 136 92 150 60 150 Z"
+                    class="fill-paw" />
+                <ellipse cx="46" cy="88" rx="9" ry="11" class="fill-pad" />
+                <ellipse cx="68" cy="80" rx="9" ry="11" class="fill-pad" />
+                <ellipse cx="90" cy="90" rx="9" ry="11" class="fill-pad" />
+                <ellipse cx="66" cy="120" rx="16" ry="13" class="fill-pad" />
+            </g>
+            <g class="paw right">
+                <path
+                    d="M180 150 C 206 150 220 128 218 104 C 216 82 198 68 172 68 C 144 68 126 86 124 112 C 122 136 148 150 180 150 Z"
+                    class="fill-paw" />
+                <ellipse cx="194" cy="88" rx="9" ry="11" class="fill-pad" />
+                <ellipse cx="172" cy="80" rx="9" ry="11" class="fill-pad" />
+                <ellipse cx="150" cy="90" rx="9" ry="11" class="fill-pad" />
+                <ellipse cx="174" cy="120" rx="16" ry="13" class="fill-pad" />
+            </g>
+        </svg>
+    </div>
+
+    <div class="card">
+        <div class="mb-4">
+            <a href="/leyenda11"
+                class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Volver al inicio</span>
+            </a>
+        </div>
+
+        <div class="brand">Inicia sesión en tu cuenta</div>
+        <div class="tagline">Ingresa tus datos para continuar</div>
+
+        <form (ngSubmit)="onSubmit()">
+            <div class="field">
+                <label for="nickName">Nombre de usuario</label>
+                <input id="nickName" type="text" placeholder="frostpup" name="nickName" [ngModel]="nickName()"
+                    (ngModelChange)="onNickNameChange($event)" (blur)="marcarNickNameTocado()"
+                    [class.!border-red-500]="nickNameError()" />
+                @if (nickNameError()) {
+                <span class="text-xs text-red-400 mt-1 block">{{ nickNameError() }}</span>
+                }
+            </div>
+
+            <div class="field">
+                <label for="password">Contraseña</label>
+                <input id="password" type="password" placeholder="••••••" name="password" [ngModel]="password()"
+                    (ngModelChange)="onPasswordChange($event)" (focus)="onPasswordFocus()" (blur)="onPasswordBlur()"
+                    [class.!border-red-500]="passwordError()" />
+                @if (passwordError()) {
+                <span class="text-xs text-red-400 mt-1 block">{{ passwordError() }}</span>
+                }
+            </div>
+
+            <div class="row">
+                <label>
+                    <input type="checkbox" name="rememberMe" [ngModel]="rememberMe()"
+                        (ngModelChange)="rememberMe.set($event)" />
+                    Recordarme
+                </label>
+                <a href="#">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" [disabled]="isLoading()"
+                class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center space-x-2 cursor-pointer disabled:cursor-not-allowed mt-2">
+                @if (isLoading()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                }
+                <span>{{ isLoading() ? 'Ingresando...' : 'Ingresar' }}</span>
+            </button>
+
+            <div class="foot">¿Nuevo por aquí? <a href="/registro">Crear una cuenta</a></div>
+        </form>
+    </div>
+</div>
