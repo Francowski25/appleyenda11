@@ -68,7 +68,7 @@ export class FanWall {
   getPuntosSiguienteNivel(): number {
     const info = this.usuarioState.userLevel();
     if (!info) return 100;
-    return this.rangoActual().max || (info.level + 1) * 100;
+    return this.rangoActual().max || 100;
   }
 
   getIconoNivel(): string {

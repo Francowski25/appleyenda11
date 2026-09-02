@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type NotificationType = 'info' | 'error' | 'success' | 'warning';
+export type NotificationType = 'success' | 'warning' | 'error' | 'exception' | 'info';
 
 export interface BotMessage {
     text: string;

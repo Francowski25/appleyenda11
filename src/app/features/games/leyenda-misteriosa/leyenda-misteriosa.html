@@ -1,0 +1,105 @@
+<div
+    class="w-full max-w-lg mx-auto rounded-2xl bg-white text-slate-900 font-sans shadow-xl border border-gray-200 overflow-hidden relative">
+
+    <main class="p-6 flex flex-col justify-center items-center">
+
+        @if (loading()) {
+        <p class="text-sm text-gray-500 py-8">Cargando reto del día...</p>
+        } @else {
+        <div class="flex flex-col gap-2.5 mb-6">
+
+            @for (intento of intentos(); track $index) {
+            <div class="flex gap-2.5 flex-wrap justify-center">
+                @for (letra of intento.split(''); track $index) {
+                <div class="w-16 h-16 border-2 border-gray-300 flex items-center justify-center text-3xl font-bold rounded-lg text-white"
+                    [ngClass]="{
+                                    'bg-emerald-500 border-emerald-500': obtenerEstadoCelda(intento, $index) === 'correct',
+                                    'bg-amber-400 border-amber-400': obtenerEstadoCelda(intento, $index) === 'present',
+                                    'bg-gray-400 border-gray-400': obtenerEstadoCelda(intento, $index) === 'absent'
+                                }">
+                    {{ letra }}
+                </div>
+                }
+            </div>
+            }
+
+            @if (!juegoTerminado()) {
+            <div class="flex gap-2.5 flex-wrap justify-center">
+                @for (i of rangoLetras(); track $index) {
+                <div
+                    class="w-16 h-16 border-2 border-gray-400 flex items-center justify-center text-3xl font-bold rounded-lg bg-white text-slate-900">
+                    {{ intentoActual()[$index] || '' }}
+                </div>
+                }
+            </div>
+            }
+
+            @for (fila of filasVaciasArray(); track $index) {
+            <div class="flex gap-2.5 flex-wrap justify-center">
+                @for (i of rangoLetras(); track $index) {
+                <div class="w-16 h-16 border-2 border-gray-200 rounded-lg bg-gray-50"></div>
+                }
+            </div>
+            }
+        </div>
+
+        <div class="h-8 text-sm font-medium" [ngClass]="gano() ? 'text-emerald-600' : 'text-gray-500'">
+            @if (juegoTerminado() && gano()) {
+            ¡Ganaste! 🎉
+            } @else if (juegoTerminado() && !gano()) {
+            Fin del juego
+            }
+        </div>
+        }
+
+    </main>
+
+    <footer class="w-full p-3 bg-gray-50 border-t border-gray-200 pb-6">
+        <div class="flex flex-col gap-2 items-center">
+            <div class="flex gap-1.5 w-full justify-center">
+                @for (tecla of teclasFila1; track tecla) {
+                <button (click)="clickTecla(tecla)"
+                    class="key px-3 py-3.5 rounded-lg font-bold text-sm flex-1 max-w-[42px]"
+                    [ngClass]="claseTecla(tecla)">{{ tecla }}</button>
+                }
+            </div>
+            <div class="flex gap-1.5 w-full justify-center px-5">
+                @for (tecla of teclasFila2; track tecla) {
+                <button (click)="clickTecla(tecla)"
+                    class="key px-3 py-3.5 rounded-lg font-bold text-sm flex-1 max-w-[42px]"
+                    [ngClass]="claseTecla(tecla)">{{ tecla }}</button>
+                }
+            </div>
+            <div class="flex gap-1.5 w-full justify-center">
+                <button (click)="confirmarIntento()"
+                    class="key bg-slate-800 hover:bg-slate-700 text-white px-4 py-3.5 rounded-lg font-bold text-xs flex-[1.5]">ENTER</button>
+                @for (tecla of teclasFila3; track tecla) {
+                <button (click)="clickTecla(tecla)"
+                    class="key px-3 py-3.5 rounded-lg font-bold text-sm flex-1 max-w-[42px]"
+                    [ngClass]="claseTecla(tecla)">{{ tecla }}</button>
+                }
+                <button (click)="borrarLetra()"
+                    class="key bg-slate-800 hover:bg-slate-700 text-white px-3 py-3.5 rounded-lg font-bold text-xs flex-[1.5]">⌫</button>
+            </div>
+        </div>
+    </footer>
+
+    @if (mostrarModalExito()) {
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div
+            class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center flex flex-col items-center border border-gray-100">
+            <div
+                class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mb-4">
+                🎉
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">¡Felicitaciones!</h3>
+            <p class="text-sm text-gray-600 mb-6">Has completado el reto exitosamente.</p>
+            <button (click)="redirigirALeyenda11()"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-emerald-600/20">
+                Continuar
+            </button>
+        </div>
+    </div>
+    }
+
+</div>

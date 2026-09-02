@@ -5,8 +5,11 @@
 } @else {
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
     @for (game of games(); track game.idGame) {
+    @let deshabilitado = estaBloqueadoOCompletado(game);
+
     <article (click)="jugar(game.slug)"
-        class="group relative bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        class="group relative bg-white rounded-2xl border border-gray-200 p-5 shadow-sm transition-all duration-300 flex flex-col justify-between"
+        [class.hover:shadow-xl]="!deshabilitado" [class.hover:-translate-y-1]="!deshabilitado">
 
         <div class="absolute top-4 right-4 z-10 flex items-center gap-1">
             @if (game.isNew) {
@@ -17,30 +20,78 @@
             <span
                 class="bg-emerald-500 text-white font-black px-2 py-0.5 rounded-full text-[9px] tracking-wider uppercase">UPDATE</span>
             }
+            @if (game.popularity !== null) {
             <span
                 class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-xs flex items-center gap-1 border border-emerald-200">
                 🔥 {{ game.popularity }}
             </span>
+            }
         </div>
 
         <div
             class="aspect-[4/3] rounded-xl bg-slate-900 flex items-center justify-center mb-4 relative overflow-hidden">
-            <span class="text-3xl">⚽</span>
+            @if (isLocked(game)) {
+            <div
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-900/90 backdrop-blur-xs">
+                <svg class="w-12 h-12 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span class="text-xs text-amber-300 font-semibold uppercase tracking-wide">
+                    Nivel {{ game.minimumLevel }} requerido
+                </span>
+            </div>
+            } @else if (loadingCompletados()) {
+            <div class="absolute inset-0 flex items-center justify-center bg-slate-900/90 backdrop-blur-xs">
+                <i class="pi pi-spin pi-spinner text-3xl text-white/60"></i>
+            </div>
+            } @else if (estaCompletado(game.slug)) {
+            <div
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-900/90 backdrop-blur-xs">
+                <svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-xs text-emerald-400 font-semibold uppercase tracking-wide">
+                    Completado hoy
+                </span>
+            </div>
+            } @else {
+            <img [src]="'games/' + game.image" [alt]="game.name"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                (error)="onImageError(game.idGame)" />
+
+            @if (!isImageLoaded(game.idGame)) {
+            <div class="absolute inset-0 flex items-center justify-center bg-slate-900">
+                <i class="pi pi-image text-8xl text-white/40"></i>
+            </div>
+            }
+            }
         </div>
 
         <div>
-            <h2 class="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
+            <h2 class="text-lg font-bold text-slate-900 transition-colors"
+                [class.group-hover:text-emerald-600]="!deshabilitado">
                 {{ game.name }}
             </h2>
             <p class="text-xs text-gray-500 mt-1">{{ game.description }}</p>
 
-            <button
-                class="w-full mt-4 py-2.5 px-4 bg-slate-900 hover:bg-emerald-600 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
-                <span>PLAY</span>
+            <button [disabled]="deshabilitado"
+                class="w-full mt-4 py-2.5 px-4 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
+                [class.bg-slate-900]="!deshabilitado" [class.hover:bg-emerald-600]="!deshabilitado"
+                [class.bg-gray-400]="deshabilitado">
+                <span>
+                    @if (isLocked(game)) { BLOQUEADO }
+                    @else if (loadingCompletados()) { ... }
+                    @else if (estaCompletado(game.slug)) { COMPLETADO }
+                    @else { JUGAR }
+                </span>
+                @if (!deshabilitado) {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
+                }
             </button>
         </div>
     </article>

@@ -3,10 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginResponse, UpdateLevelPoints, LevelInfo } from '../models/login-response.model';
+import { LoginResponse, UpdateLevelPoints } from '../models/login-response.model';
 import { NotificationService } from './notification.service';
 
-const REFRESH_MARGIN_MS = 60 * 1000;
+const SESSION_DURATION_MS = 60 * 60 * 1000;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -16,18 +16,30 @@ export class AuthService {
 
     readonly currentUser = signal<LoginResponse | null>(this.getUserFromStorage());
     readonly isLoggedIn = computed(() => this.currentUser() !== null);
-    readonly userLevel = computed<LevelInfo & { level: number; totalPoints: number } | null>(() => {
+
+    // ⚠️ Ahora incluye "level" (nivel numérico real), no solo "levelPosition" (posición del rango)
+    readonly userLevel = computed<UpdateLevelPoints | null>(() => {
         const user = this.currentUser();
         if (!user) return null;
         const { level, totalPoints, idLevel, levelName, levelIcon, levelPosition, levelMin, levelMax } = user;
         return { level, totalPoints, idLevel, levelName, levelIcon, levelPosition, levelMin, levelMax };
     });
 
-    private refreshTimeoutId: any = null;
+    private logoutTimeoutId: any = null;
 
     private getUserFromStorage(): LoginResponse | null {
         const raw = localStorage.getItem('current_user');
-        if (!raw) return null;
+        const expiry = Number(localStorage.getItem('session_expiry'));
+
+        if (!raw || !expiry) return null;
+
+        const remaining = expiry - Date.now();
+        if (remaining <= 0) {
+            this.clearStorage();
+            return null;
+        }
+
+        this.scheduleAutoLogout(remaining);
         try { return JSON.parse(raw); } catch { return null; }
     }
 
@@ -56,80 +68,62 @@ export class AuthService {
     }
 
     private saveSession(data: LoginResponse): void {
+        const expiry = Date.now() + SESSION_DURATION_MS;
         localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('refresh_token', data.refreshToken);
         localStorage.setItem('current_user', JSON.stringify(data));
+        localStorage.setItem('session_expiry', String(expiry));
         this.currentUser.set(data);
-        this.scheduleRefresh();
+        this.scheduleAutoLogout(SESSION_DURATION_MS);
     }
 
     getToken(): string | null {
+        const expiry = Number(localStorage.getItem('session_expiry'));
+        if (expiry && Date.now() > expiry) {
+            this.logout('session_expired', true);
+            return null;
+        }
         return localStorage.getItem('auth_token');
     }
 
-    updateLevelAndPoints(data: UpdateLevelPoints): void {
+    sumarPuntos(puntos: number): void {
         const current = this.currentUser();
         if (!current) return;
-        const updated = { ...current, ...data };
+        const totalPoints = current.totalPoints + puntos;
+        const updated = { ...current, totalPoints };
         localStorage.setItem('current_user', JSON.stringify(updated));
         this.currentUser.set(updated);
-    }
-
-    updateNivelYPuntos(level: number, totalPoints: number): void {
-        const current = this.currentUser();
-        if (!current) return;
-        const updated = { ...current, level, totalPoints };
-        localStorage.setItem('current_user', JSON.stringify(updated));
-        this.currentUser.set(updated);
-    }
-
-    getUserLevel(): number | null {
-        return this.currentUser()?.level ?? null;
     }
 
     getUserPoints(): number | null {
         return this.currentUser()?.totalPoints ?? null;
     }
 
-    getLevelInfoComplete(): LevelInfo | null {
-        const user = this.currentUser();
-        if (!user) return null;
-        const { idLevel, levelName, levelIcon, levelPosition, levelMin, levelMax } = user;
-        return { idLevel, levelName, levelIcon, levelPosition, levelMin, levelMax };
+    getLevelInfoComplete(): UpdateLevelPoints | null {
+        return this.userLevel();
     }
 
-    logout(reason?: string, redirigirALogin: boolean = false): void {
-        this.clearRefreshTimer();
-        localStorage.removeItem('current_user');
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
+    logout(reason?: string, redirigir: boolean = false): void {
+        this.clearLogoutTimer();
+        this.clearStorage();
         this.currentUser.set(null);
 
-        if (redirigirALogin) {
-            this.router.navigate(['/login'], { queryParams: reason ? { reason } : undefined });
+        if (redirigir) {
+            this.router.navigate(['/leyenda11'], { queryParams: reason ? { reason } : undefined });
         }
     }
 
-    private scheduleRefresh(): void {
-        this.clearRefreshTimer();
-        this.refreshTimeoutId = setTimeout(() => this.refreshSession(), 3600000 - REFRESH_MARGIN_MS);
+    private clearStorage(): void {
+        localStorage.removeItem('current_user');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('session_expiry');
     }
 
-    private clearRefreshTimer(): void {
-        if (this.refreshTimeoutId) clearTimeout(this.refreshTimeoutId);
+    private scheduleAutoLogout(ms: number): void {
+        this.clearLogoutTimer();
+        this.logoutTimeoutId = setTimeout(() => this.logout('session_expired', true), ms);
     }
 
-    private refreshSession(): void {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-            this.logout('session_expired', true);
-            return;
-        }
-
-        this.http.post<LoginResponse>(`${environment.urlBase}/auth/refresh`, { refreshToken })
-            .subscribe({
-                next: (data) => this.saveSession(data),
-                error: () => this.logout('session_expired', true)
-            });
+    private clearLogoutTimer(): void {
+        if (this.logoutTimeoutId) clearTimeout(this.logoutTimeoutId);
     }
 }
