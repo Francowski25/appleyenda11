@@ -10,6 +10,8 @@ export interface LoginResponse {
     userType: string;
     level: number;
     totalPoints: number;
+    puntosFaltantes: number;
+    progresoPorcentaje: number;
     idLevel: string | null;
     levelName: string | null;
     levelIcon: string | null;
@@ -31,4 +33,6 @@ export interface LevelInfo {
 export interface UpdateLevelPoints extends LevelInfo {
     level: number;
     totalPoints: number;
+    puntosFaltantes: number;
+    progresoPorcentaje: number;
 }

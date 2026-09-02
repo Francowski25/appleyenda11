@@ -17,12 +17,17 @@ export class AuthService {
     readonly currentUser = signal<LoginResponse | null>(this.getUserFromStorage());
     readonly isLoggedIn = computed(() => this.currentUser() !== null);
 
-    // ⚠️ Ahora incluye "level" (nivel numérico real), no solo "levelPosition" (posición del rango)
     readonly userLevel = computed<UpdateLevelPoints | null>(() => {
         const user = this.currentUser();
         if (!user) return null;
-        const { level, totalPoints, idLevel, levelName, levelIcon, levelPosition, levelMin, levelMax } = user;
-        return { level, totalPoints, idLevel, levelName, levelIcon, levelPosition, levelMin, levelMax };
+        const {
+            level, totalPoints, idLevel, levelName, levelIcon,
+            levelPosition, levelMin, levelMax, puntosFaltantes, progresoPorcentaje
+        } = user;
+        return {
+            level, totalPoints, idLevel, levelName, levelIcon,
+            levelPosition, levelMin, levelMax, puntosFaltantes, progresoPorcentaje
+        };
     });
 
     private logoutTimeoutId: any = null;
@@ -83,6 +88,14 @@ export class AuthService {
             return null;
         }
         return localStorage.getItem('auth_token');
+    }
+
+    updateLevelAndPoints(data: UpdateLevelPoints): void {
+        const current = this.currentUser();
+        if (!current) return;
+        const updated: LoginResponse = { ...current, ...data };
+        localStorage.setItem('current_user', JSON.stringify(updated));
+        this.currentUser.set(updated);
     }
 
     sumarPuntos(puntos: number): void {
